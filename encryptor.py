@@ -1,5 +1,7 @@
 import os
 import hashlib
+import random
+import string
 from cryptography.fernet import Fernet
 
 def generate_key(password):
@@ -37,3 +39,19 @@ def get_all_files(target_dir):
         for file in files:
             all_files.append(os.path.join(root, file))
     return all_files
+
+def generate_random_password(length=12):
+    chars = string.ascii_letters + string.digits
+    return ''.join(random.choices(chars, k=length))
+
+def save_hash(password):
+    hashed = hashlib.sha256(password.encode()).hexdigest()
+    with open("check.hash", "w") as f:
+        f.write(hashed)
+
+def check_password(password):
+    hashed = hashlib.sha256(password.encode()).hexdigest()
+    if not os.path.exists("check.hash"):
+        return True
+    with open("check.hash", "r") as f:
+        return f.read().strip() == hashed
